@@ -1,6 +1,6 @@
-#include "NdefDecode.h"
+#include "NDEF.h"
 
-NdefDecode::NdefDecode(){
+NDEF::NDEF(){
     
 }
 
@@ -37,7 +37,7 @@ NdefDecode::NdefDecode(){
  * @param IN  b  the value of the last 3 bits of the NDEF record header
  * @return       the human readable type of the NDEF record
  */
-char * NdefDecode::type_name_format(uint8_t b){
+char * NDEF::type_name_format(uint8_t b){
     switch (b) {
         case 0x00:
             return "Empty";
@@ -69,7 +69,7 @@ char * NdefDecode::type_name_format(uint8_t b){
  * @param IN  b  the code of the URI to convert to the actual prefix
  * @return       the URI prefix
  */
-char *NdefDecode::uri_identifier_code(uint8_t b)
+char *NDEF::uri_identifier_code(uint8_t b)
 {
     /*
      * Section 3.2.2 "URI Identifier Code" of "URI Record Type Definition
@@ -160,7 +160,7 @@ char *NdefDecode::uri_identifier_code(uint8_t b)
  * @param IN payload_len  The length of the NDEF URI payload
  * @return                The full reconstructed URI
  */
-char *NdefDecode::ndef_parse_uri(uint8_t * payload, int payload_len)
+char *NDEF::ndef_parse_uri(uint8_t * payload, int payload_len)
 {
        char *prefix = uri_identifier_code(*payload);
     int prefix_len = strlen(prefix);
@@ -184,7 +184,7 @@ char *NdefDecode::ndef_parse_uri(uint8_t * payload, int payload_len)
  * @param OUT text        The text contained in NDEF Text Record
  * @return                Success or not.
  */
-bool NdefDecode::ndef_parse_text(uint8_t * payload, int payload_len, char ** lang, char ** text)
+char *NDEF::ndef_parse_text(uint8_t * payload, int payload_len, char ** lang, char ** text)
 {
     //    if (DEBUG) print_hex(payload);
     bool utf16_format = ((payload[0] & 0x80) == 0x80);
@@ -212,7 +212,7 @@ bool NdefDecode::ndef_parse_text(uint8_t * payload, int payload_len, char ** lan
     memcpy(*text, payload + 1 + lang_len, text_len);
     (*text)[text_len] = L'\0';
     
-    return 1;
+    return *text;
 }
 
 /**
@@ -222,7 +222,7 @@ bool NdefDecode::ndef_parse_text(uint8_t * payload, int payload_len, char ** lan
  * @param IN ndef_msg  The NDEF message
  * @return             whether or not the parsing succeeds
  */
-bool NdefDecode::parse_ndef_message(uint8_t * ndef_msg) {
+char *NDEF::parse_ndef_message(uint8_t * ndef_msg) {
     int offset = 2;
     
     bool me;
@@ -310,6 +310,6 @@ bool NdefDecode::parse_ndef_message(uint8_t * ndef_msg) {
     
     Serial.println("");
     
-    return true;
+    return "";
 }
 

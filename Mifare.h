@@ -1,3 +1,5 @@
+#include "PN532_Com.h"
+
 #define MIFARE_ISO14443A              (0x00)
 
 // Mifare Commands
@@ -31,5 +33,4 @@ class Mifare{
     uint8_t ultralight_readMemoryPage(uint8_t pageaddress, uint8_t *page);
     uint8_t ultralight_writeMemoryPage(uint8_t pageaddress, uint8_t *page);
     
-    
-}
+};

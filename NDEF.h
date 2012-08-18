@@ -47,11 +47,11 @@
 #define NDEF_KEY_B	2
 
 //#define BUFFER_SIZE 512
-//#define DEBUG 1
+//#define DEBUG
 
-class NdefDecode{
+class NDEF{
   public:
-    NdefDecode();
+    NDEF();
 //    bool get_ndef_message_from_dump(uint8_t* dump, uint8_t * ndef_msg);
     char *type_name_format(uint8_t b);
     char *uri_identifier_code(uint8_t b);
