@@ -1,8 +1,15 @@
+#ifndef __PN532_COM_INCLUDED__
+#define __PN532_COM_INCLUDED__
+
 #if ARDUINO >= 100
 #include "Arduino.h"
 #else
 #include "WProgram.h"
 #endif
+
+#define PN532_BUSY                          (0x00)
+#define PN532_READY                         (0x01)
+#define PN532_WAKEUP                        (0x55)
 
 #define PN532_PREAMBLE                      (0x00)
 #define PN532_STARTCODE1                    (0x00)
@@ -46,8 +53,22 @@
 #define PN532_COMMAND_TGRESPONSETOINITIATOR (0x90)
 #define PN532_COMMAND_TGGETTARGETSTATUS     (0x8A)
 
-#define PN532_WAKEUP                        (0x55)
+
 
 #define PN532_PACKBUFFSIZE                  (64)
 
 #define PN532DEBUG
+
+
+class PN532{
+public:
+    virtual void        begin(void);
+    virtual uint32_t    getFirmwareVersion(void);
+    virtual boolean     readack(void);
+    virtual boolean     sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen, uint16_t timeout = 1000);
+	virtual uint8_t		readstatus(void);
+    virtual void		readdata(uint8_t* buff, uint8_t n);
+    virtual void		sendcommand(uint8_t* cmd, uint8_t cmdlen);
+};
+
+#endif

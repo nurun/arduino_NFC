@@ -33,7 +33,7 @@ PN532_SPI::PN532_SPI(uint8_t clk, uint8_t miso, uint8_t mosi, uint8_t ss) {
  */
 /**************************************************************************/
 
-void PN532_SPI::begin() {
+void PN532_SPI::begin(void) {
     digitalWrite(_ss, LOW);
     
     delay(1000);
@@ -114,7 +114,7 @@ boolean PN532_SPI::sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen, uint16_t ti
     sendcommand(cmd, cmdlen);
     
     // Wait for chip to say its ready!
-    while (readstatus() != PN532_SPI_READY) {
+    while (readstatus() != PN532_READY) {
         if (timeout != 0) {
             timer+=10;
             if (timer > timeout)
@@ -130,7 +130,7 @@ boolean PN532_SPI::sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen, uint16_t ti
     
     timer = 0;
     // Wait for chip to say its ready!
-    while (readstatus() != PN532_SPI_READY) {
+    while (readstatus() != PN532_READY) {
         if (timeout != 0) {
             timer+=10;
             if (timer > timeout)
@@ -303,3 +303,8 @@ uint8_t PN532_SPI::spiread(void) {
     }
     return x;
 }
+
+
+
+
+

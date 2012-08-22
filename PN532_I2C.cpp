@@ -26,7 +26,7 @@ PN532_I2C::PN532_I2C(uint8_t irq, uint8_t reset) {
  @brief  Setups the HW
  */
 /**************************************************************************/
-void PN532_I2C::begin() {
+void PN532_I2C::begin(void) {
     Wire.begin();
     
     // Reset the PN532
@@ -108,7 +108,7 @@ boolean PN532_I2C::sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen, uint16_t ti
     sendcommand(cmd, cmdlen);
     
     // Wait for chip to say its ready!
-    while (readstatus() != PN532_I2C_READY) {
+    while (readstatus() != PN532_READY) {
         if (timeout != 0) {
             timer+=10;
             if (timer > timeout)
@@ -145,9 +145,9 @@ uint8_t PN532_I2C::readstatus(void) {
     uint8_t x = digitalRead(_irq);
     
     if (x == 1)
-        return PN532_I2C_BUSY;
+        return PN532_BUSY;
     else
-        return PN532_I2C_READY;
+        return PN532_READY;
 }
 
 /**************************************************************************/

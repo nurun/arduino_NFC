@@ -1,3 +1,7 @@
+#ifndef __NDEF_INCLUDED__
+#define __NDEF_INCLUDED__
+
+
 #if ARDUINO >= 100
 #include "Arduino.h"
 #else
@@ -43,9 +47,6 @@
 #define NDEF_URIPREFIX_URN_EPC              (0x22)
 #define NDEF_URIPREFIX_URN_NFC              (0x23)
 
-#define NDEF_KEY_A	1
-#define NDEF_KEY_B	2
-
 //#define BUFFER_SIZE 512
 //#define DEBUG
 
@@ -61,3 +62,5 @@ class NDEF{
     char *parse_ndef_message(uint8_t *ndef_msg);
 
 };
+
+#endif

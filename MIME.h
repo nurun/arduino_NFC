@@ -1,3 +1,6 @@
+#ifndef __MIME_INCLUDED__
+#define __MIME_INCLUDED__
+
 #if ARDUINO >= 100
 #include "Arduino.h"
 #else
@@ -11,3 +14,5 @@ class MIME{
     MIME(void);
    
 };
+
+#endif
