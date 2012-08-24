@@ -53,14 +53,14 @@
 class NDEF{
   public:
     NDEF();
-//    bool get_ndef_message_from_dump(uint8_t* dump, uint8_t * ndef_msg);
-    char *type_name_format(uint8_t b);
-    char *uri_identifier_code(uint8_t b);
-    char *ndef_parse_uri(uint8_t * payload, int payload_len);
-    char *ndef_parse_text(uint8_t * payload, int payload_len, char ** lang, char ** text);
-
-    char *parse_ndef_message(uint8_t *ndef_msg);
-
+	char * decode_message(char * msg);
+	boolean	encode_message(uint8_t type, uint8_t * msg);
+	
+  private:
+    char * get_type_description(uint8_t b);
+    char * get_uri_prefix(uint8_t b);
+    char * parse_uri(uint8_t * payload, int payload_len);
+    char * parse_text(uint8_t * payload, int payload_len, char ** lang, char ** text);
 };
 
 #endif
