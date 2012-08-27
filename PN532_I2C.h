@@ -2,6 +2,7 @@
 #define __PN532_I2C_INCLUDED__
 
 #include "PN532_Com.h"
+
 #include "wire.h"
 
 #define PN532_I2C_ADDRESS                   (0x48 >> 1)
@@ -20,7 +21,7 @@ public:
     boolean sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen, uint16_t timeout = 1000);
     
 	uint8_t readstatus(void);
-	void    readdata(uint8_t* buff, uint8_t n);
+	void    readdata(uint8_t* buffer, uint8_t length);
     void    sendcommand(uint8_t* cmd, uint8_t cmdlen);
 	
 private:

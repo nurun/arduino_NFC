@@ -158,7 +158,7 @@ uint8_t PN532_I2C::readstatus(void) {
  @param  n         Number of bytes to be read
  */
 /**************************************************************************/
-void PN532_I2C::readdata(uint8_t* buff, uint8_t n) {
+void PN532_I2C::readdata(uint8_t* buffer, uint8_t length) {
     uint16_t timer = 0;
     
     delay(2);
@@ -167,15 +167,15 @@ void PN532_I2C::readdata(uint8_t* buff, uint8_t n) {
     Serial.print("Reading: ");
 #endif
     // Start read (n+1 to take into account leading 0x01 with I2C)
-    Wire.requestFrom((uint8_t)PN532_I2C_ADDRESS, (uint8_t)(n+2));
+    Wire.requestFrom((uint8_t)PN532_I2C_ADDRESS, (uint8_t)(length+2));
     // Discard the leading 0x01
     wirerecv();
-    for (uint8_t i=0; i<n; i++) {
+    for (uint8_t i=0; i<length; i++) {
         delay(1);
-        buff[i] = wirerecv();
+        buffer[i] = wirerecv();
 #ifdef PN532DEBUG
         Serial.print(" 0x");
-        Serial.print(buff[i], HEX);
+        Serial.print(buffer[i], HEX);
 #endif
     }
     // Discard trailing 0x00 0x00

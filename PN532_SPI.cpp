@@ -172,7 +172,7 @@ uint8_t PN532_SPI::readstatus(void) {
  */
 /**************************************************************************/
 
-void PN532_SPI::readdata(uint8_t* buff, uint8_t n) {
+void PN532_SPI::readdata(uint8_t* buffer, uint8_t length) {
     digitalWrite(_ss, LOW);
     delay(2);
     spiwrite(PN532_SPI_DATAREAD);
@@ -180,12 +180,12 @@ void PN532_SPI::readdata(uint8_t* buff, uint8_t n) {
 #ifdef PN532DEBUG
     Serial.print("Reading: ");
 #endif
-    for (uint8_t i=0; i<n; i++) {
+    for (uint8_t i=0; i<length; i++) {
         delay(1);
-        buff[i] = spiread();
+        buffer[i] = spiread();
 #ifdef PN532DEBUG
         Serial.print(" 0x");
-        Serial.print(buff[i], HEX);
+        Serial.print(buffer[i], HEX);
 #endif
     }
     

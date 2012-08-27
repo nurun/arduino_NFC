@@ -21,16 +21,18 @@ char * NDEF::decode_message(char * msg) {
         bool cf = (*(msg + offset) & 0x20) == 0x20;        /* Chunk Flag */
         bool sr = (*(msg + offset) & 0x10) == 0x10;        /* Short Record */
         bool il = (*(msg + offset) & 0x08) == 0x08;        /* ID Length Present */
-        char * typeNameFormat = get_type_description(*(msg + offset) & 0x07);
+//        char * typeNameFormat = get_type_description(*(msg + offset) & 0x07);
+        uint8_t tn = (*(msg + offset) & 0x07);
         offset++;
         
-#ifdef DEBUG
+#ifdef NDEFDEBUG
 		Serial.print("MB:"); Serial.println(mb, DEC);
 		Serial.print("ME:"); Serial.println(me, DEC);
 		Serial.print("CF:"); Serial.println(cf, DEC);
 		Serial.print("SR:"); Serial.println(sr, DEC);
 		Serial.print("IL:"); Serial.println(il, DEC);
-		Serial.println(typeNameFormat);
+        Serial.print("TNF:"); Serial.println(tn, HEX);
+//		Serial.println(typeNameFormat);
 #endif
         if (cf) {
             Serial.println("chunk flag not supported yet");
@@ -46,7 +48,6 @@ char * NDEF::decode_message(char * msg) {
             payloadLength = (payloadLength < 0) ? payloadLength + 256 : payloadLength;
             offset++;
         } else {
-            //FIXME payloadLength = Utils.byteArrayToInt(data, offset);
             offset += 4;
         }
         
@@ -55,8 +56,9 @@ char * NDEF::decode_message(char * msg) {
             idLength = *(msg + offset);
             offset++;
         }
-        char *type =  (char*)malloc(typeLength);
-        memcpy(type, msg + offset, typeLength);
+        
+        
+        uint8_t type = *(msg + offset);
 		
         offset += typeLength;
         
@@ -67,39 +69,44 @@ char * NDEF::decode_message(char * msg) {
             offset += idLength;
         }
 #ifdef DEBUG
-		//            p("typeLength=%d payloadLength=%d idLength=%d type=%s\n", typeLength, payloadLength, idLength, type);
+        Serial.print("TYPE "); Serial.println((char)type);
 #endif
         uint8_t *payload = (uint8_t *)malloc(payloadLength);
         
         memcpy(payload, msg + offset, payloadLength);
         offset += payloadLength;
-        
-        if (strncmp("U", type, typeLength) == 0) {
-            /* handle URI case */
-            char *uri = ndef_parse_uri(payload, payloadLength);
-            Serial.print("found uri: "); Serial.println(uri);
-//        } else if(strncmp("Sp", type, typeLength) == 0) {
-//            Serial.println("Found Smart Poster - Begin");
-//            parse_ndef_message(payload);
-//            Serial.println("Smart Poster - End");
-        } else if(strncmp("T", type, typeLength) == 0) {
-            char *lang;
-            char *text;
-            if(ndef_parse_text(payload, payloadLength, &lang, &text)) {
-                Serial.print("found text lang: "); Serial.println(lang);
-                Serial.print("text: "); Serial.println(text);
-            } else {
-                Serial.println("Unable to parse one Text Record.");
-            }
-        } else {
-            Serial.print("unsupported NDEF record type: "); Serial.println((char *)type);
-            return false;
+        char *lang;
+        char *text;
+        char * uri;
+        switch (type) {
+            case 85:
+                uri = parse_uri(payload, payloadLength);
+                Serial.print("uri: "); Serial.println(uri);
+                break;
+            case 84:
+                if(parse_text(payload, payloadLength, &lang, &text)) {
+                    Serial.print("lang: "); Serial.println(lang);
+                    Serial.print("text: "); Serial.println(text);
+                } else {
+                    Serial.println("err");
+                }
+
+                break;
+            case 83:
+//              Serial.println("Found Smart Poster - Begin");
+//              parse_ndef_message(payload);
+//              Serial.println("Smart Poster - End");
+                break;
+            default:
+                Serial.print("err, NDEF type: "); Serial.println((char)type);
+                return false;
+                break;
         }
     } while (!me);              /* as long as this is not the last record */
     
     Serial.println("");
     
-    return type;
+    return "";
 }
 
 
@@ -142,28 +149,28 @@ char * NDEF::decode_message(char * msg) {
  * @param IN  b  the value of the last 3 bits of the NDEF record header
  * @return       the human readable type of the NDEF record
  */
-char * NDEF::get_ndef_type_description(uint8_t b){
-    switch (b) {
-        case 0x00:
-            return "Empty";
-        case 0x01:
-            return "NFC Forum well-known type NFC RTD";
-        case 0x02:
-            return "Media-type as defined in RFC 2046 RFC 2046";
-        case 0x03:
-            return "Absolute URI as defined in RFC 3986 RFC 3986";
-        case 0x04:
-            return "NFC Forum external type NFC RTD";
-        case 0x05:
-            return "Unknown";
-        case 0x06:
-            return "Unchanged";
-        case 0x07:
-            return "Reserved";
-        default:
-            return "Invalid TNF byte!";
-    }
-}
+//char * NDEF::get_type_description(uint8_t b){
+//    switch (b) {
+//        case 0x00:
+//            return "Empty";
+//        case 0x01:
+//            return "NFC Forum well-known type NFC RTD";
+//        case 0x02:
+//            return "Media-type as defined in RFC 2046 RFC 2046";
+//        case 0x03:
+//            return "Absolute URI as defined in RFC 3986 RFC 3986";
+//        case 0x04:
+//            return "NFC Forum external type NFC RTD";
+//        case 0x05:
+//            return "Unknown";
+//        case 0x06:
+//            return "Unchanged";
+//        case 0x07:
+//            return "Reserved";
+//        default:
+//            return "Invalid TNF byte!";
+//    }
+//}
 
 /**
  * Convert type of URI to the actual URI prefix to be used in conjunction
@@ -171,6 +178,11 @@ char * NDEF::get_ndef_type_description(uint8_t b){
  * 3.2.2 "URI Identifier Code" of "URI Record Type Definition Technical
  * Specification".
  *
+ 
+ 
+ !! comment out ones you don't want to support to save memory size, they add up to alot! 
+ 
+ 
  * @param IN  b  the code of the URI to convert to the actual prefix
  * @return       the URI prefix
  */
@@ -195,66 +207,66 @@ char *NDEF::get_uri_prefix(uint8_t b)
             return "tel:";
         case 0x06:
             return "mailto:";
-        case 0x07:
-            return "ftp://anonymous:anonymous@";
-        case 0x08:
-            return "ftp://ftp.";
-        case 0x09:
-            return "ftps://";
-        case 0x0A:
-            return "sftp://";
-        case 0x0B:
-            return "smb://";
-        case 0x0C:
-            return "nfs://";
-        case 0x0D:
-            return "ftp://";
-        case 0x0E:
-            return "dav://";
-        case 0x0F:
-            return "news:";
-        case 0x10:
-            return "telnet://";
-        case 0x11:
-            return "imap:";
-        case 0x12:
-            return "rtsp://";
-        case 0x13:
-            return "urn:";
-        case 0x14:
-            return "pop:";
-        case 0x15:
-            return "sip:";
-        case 0x16:
-            return "sips:";
-        case 0x17:
-            return "tftp:";
-        case 0x18:
-            return "btspp://";
-        case 0x19:
-            return "btl2cap://";
-        case 0x1A:
-            return "btgoep://";
-        case 0x1B:
-            return "tcpobex://";
-        case 0x1C:
-            return "irdaobex://";
+//        case 0x07:
+//            return "ftp://anonymous:anonymous@";
+//        case 0x08:
+//            return "ftp://ftp.";
+//        case 0x09:
+//            return "ftps://";
+//        case 0x0A:
+//            return "sftp://";
+//        case 0x0B:
+//            return "smb://";
+//        case 0x0C:
+//            return "nfs://";
+//        case 0x0D:
+//            return "ftp://";
+//        case 0x0E:
+//            return "dav://";
+//        case 0x0F:
+//            return "news:";
+//        case 0x10:
+//            return "telnet://";
+//        case 0x11:
+//            return "imap:";
+//        case 0x12:
+//            return "rtsp://";
+//        case 0x13:
+//            return "urn:";
+//        case 0x14:
+//            return "pop:";
+//        case 0x15:
+//            return "sip:";
+//        case 0x16:
+//            return "sips:";
+//        case 0x17:
+//            return "tftp:";
+//        case 0x18:
+//            return "btspp://";
+//        case 0x19:
+//            return "btl2cap://";
+//        case 0x1A:
+//            return "btgoep://";
+//        case 0x1B:
+//            return "tcpobex://";
+//        case 0x1C:
+//            return "irdaobex://";
         case 0x1D:
             return "file://";
-        case 0x1E:
-            return "urn:epc:id:";
-        case 0x1F:
-            return "urn:epc:tag:";
-        case 0x20:
-            return "urn:epc:pat:";
-        case 0x21:
-            return "urn:epc:raw:";
-        case 0x22:
-            return "urn:epc:";
-        case 0x23:
-            return "urn:nfc:";
+//        case 0x1E:
+//            return "urn:epc:id:";
+//        case 0x1F:
+//            return "urn:epc:tag:";
+//        case 0x20:
+//            return "urn:epc:pat:";
+//        case 0x21:
+//            return "urn:epc:raw:";
+//        case 0x22:
+//            return "urn:epc:";
+//        case 0x23:
+//            return "urn:nfc:";
         default:
-            return "RFU";
+            return "unknown";
     }
 }
 

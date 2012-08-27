@@ -1,6 +1,7 @@
 #ifndef __NDEF_INCLUDED__
 #define __NDEF_INCLUDED__
 
+//#include <avr/pgmspace.h>
 
 #if ARDUINO >= 100
 #include "Arduino.h"
@@ -57,7 +58,7 @@ class NDEF{
 	boolean	encode_message(uint8_t type, uint8_t * msg);
 	
   private:
-    char * get_type_description(uint8_t b);
+//    char * get_type_description(uint8_t b);
     char * get_uri_prefix(uint8_t b);
     char * parse_uri(uint8_t * payload, int payload_len);
     char * parse_text(uint8_t * payload, int payload_len, char ** lang, char ** text);
