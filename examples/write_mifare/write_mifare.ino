@@ -43,7 +43,7 @@ PN532 * board = new PN532_I2C(IRQ, RESET);
 #include <Mifare.h>
 Mifare mifare;
 //init keys for reading classic
-uint8_t Mifare::useKey = KEY_A;
+uint8_t Mifare::useKey = KEY_B;
 uint8_t Mifare::keyA[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 uint8_t Mifare::keyB[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 uint32_t Mifare::cardType = 0; //will get overwritten if it finds a different card
