@@ -43,6 +43,7 @@ class Mifare{
     boolean writePayload(uint8_t * payload, uint8_t length);
     
   private:
+    boolean classic_formatForNDEF(void);
     boolean classic_authenticateBlock (uint32_t blockNumber);
     
     boolean classic_readPayload(uint8_t * output, uint8_t lengthLimit);

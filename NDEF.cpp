@@ -116,39 +116,43 @@ char * NDEF::decode_message(uint8_t * msg) {
  * @return              length of the encoded message
  */
 
+
+
 uint8_t	NDEF::encode_URL(uint8_t uriPrefix, uint8_t * msg){
     uint8_t len = strlen((char *)msg);
-    uint8_t payload_head[9] = {0x00, 0x00, 0x03, len+5, 0xD1, 0x01, len+1, 0x55, uriPrefix};
+    uint8_t payload_head[7] = {0x03, len+5, 0xD1, 0x01, len+1, 0x55, uriPrefix};
+    const uint8_t term[1] ={0xFE};
 
-    memmove(msg+9, msg, len);
-    memcpy(msg+0, payload_head, 9);
-   
+    memmove(msg+7, msg, len);
+    memcpy(msg+0, payload_head, 7);
+    memcpy(msg + len + 7, term , 1);
 #ifdef DEBUG
-    for (uint8_t i = 0 ; i < len + 9; i++) {
+    for (uint8_t i = 0 ; i < len + 8; i++) {
         Serial.print(msg[i], HEX);Serial.print(" ");
     }
     Serial.println("");
 #endif    
     
-    return len + 9;
+    return len + 8;
     
 }
 uint8_t NDEF::encode_TEXT(uint8_t * lang, uint8_t * msg){
     uint8_t len = strlen((char *)msg);
 
-    uint8_t payload_head[10] = {0x00, 0x00, 0x03, len+5, 0xD1, 0x01, len+2, 0x54, lang[0], lang[1]};
+    uint8_t payload_head[8] = {0x03, len+5, 0xD1, 0x01, len+2, 0x54, lang[0], lang[1]};
+    const uint8_t term[1] ={0xFE};
     
-    memmove(msg+10, msg, len);
-    memcpy(msg, payload_head, 10);
-
+    memmove(msg+8, msg, len);
+    memcpy(msg, payload_head, 8);
+    memcpy(msg + len + 8, term , 1);
 #ifdef DEBUG
-    for (uint8_t i = 0 ; i < len + 10; i++) {
+    for (uint8_t i = 0 ; i < len + 9; i++) {
         Serial.print(msg[i], HEX);Serial.print(" ");
     }
     Serial.println("");
 #endif
     
-    return len + 10;
+    return len + 9;
     
 }
 
@@ -328,7 +332,7 @@ boolean NDEF::parse_uri(uint8_t * payload, int payload_len, char * uri ){
     memcpy(uri + prefix_len, payload + 1, payload_len - 1);
     *(uri + prefix_len + payload_len - 1) = 0x00;
 #ifdef DEBUG
-        Serial.println(url);
+        Serial.println(uri);
 #endif 
 
     return true;

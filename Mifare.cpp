@@ -116,6 +116,26 @@ uint8_t* Mifare::readTarget() {
 }
 
 
+boolean Mifare::classic_formatForNDEF (){
+    uint8_t sectorbuffer1[16] = {0x14, 0x01, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1};
+    uint8_t sectorbuffer2[16] = {0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1};
+    uint8_t sectorbuffer3[16] = {0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0x78, 0x77, 0x88, 0xC1, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    
+    // Write block 1 and 2 to the card
+    if (!(classic_writeMemoryBlock (1, sectorbuffer1)))
+        return false;
+    if (!(classic_writeMemoryBlock (2, sectorbuffer2)))
+        return false;
+    // Write key A and access rights card
+    if (!(classic_writeMemoryBlock (3, sectorbuffer3)))
+        return false;
+//    Serial.println("FORMATTED");
+    
+    // Seems that everything was OK (?!)
+    return true;
+}
+
+
 /* read payload */
 
 //get type of card and size, then either classic or ultralight read all the blocks
@@ -213,6 +233,8 @@ boolean Mifare::writePayload (uint8_t *payload, uint8_t length){
     
     switch (cardType) {
         case MIFARE_CLASSIC:
+            if(! classic_formatForNDEF())
+                return false;
             return classic_writePayload(payload, length);
             break;
         case MIFARE_ULTRALIGHT:
@@ -241,6 +263,12 @@ boolean Mifare::classic_writePayload (uint8_t *payload, uint8_t len){
     uint8_t position = 0;
     uint8_t block_count = start_block;
     uint8_t byte_count = 0;
+    
+    //add 2 zeros to the front of the payload who knows why
+    memmove(payload +2, payload, len);
+    memcpy(payload, zero, 2);
+    len +=2;
+    
     
     while (position < len){
         if (block_count %4 < 3) {
@@ -473,12 +501,12 @@ boolean Mifare::classic_writeMemoryBlock (uint8_t blockaddress, uint8_t * block)
     if (! board->sendCommandCheckAck(packetbuffer, 20))
         return false;
     // read data packet
-    board->readdata(packetbuffer, 2+6);
+    board->readdata(packetbuffer, 8);
     
 #ifdef MIFAREDEBUG
     // check some basic stuff
     Serial.println("WRITE");
-    for(uint8_t i=0;i<2+6;i++) {
+    for(uint8_t i=0;i<8;i++) {
         Serial.print(packetbuffer[i], HEX); Serial.print(" ");
     }
     Serial.println("");

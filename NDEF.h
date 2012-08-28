@@ -56,7 +56,7 @@
 
 
 #define NDEF_BUFFER_SIZE 224
-//#define DEBUG
+#define DEBUG
 
 class NDEF{
   public:

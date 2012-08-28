@@ -161,7 +161,7 @@ uint8_t PN532_I2C::readstatus(void) {
 void PN532_I2C::readdata(uint8_t* buffer, uint8_t length) {
     uint16_t timer = 0;
     
-    delay(2);
+    delay(5);
     
 #ifdef PN532DEBUG
     Serial.print("Reading: ");
@@ -257,7 +257,7 @@ void PN532_I2C::sendcommand(uint8_t* cmd, uint8_t cmdlen) {
     Serial.print(" 0x"); Serial.print(PN532_POSTAMBLE, HEX);
     Serial.println("");
 #endif
-} 
+}
 
 /**************************************************************************/
 /*!
