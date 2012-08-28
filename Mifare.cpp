@@ -107,9 +107,9 @@ uint8_t* Mifare::readTarget() {
 #ifdef MIFAREDEBUG
     Serial.print("UID:");
     for(uint8_t i=0;i<20;i++){
-        Serial.print(packetbuffer[i], HEX); Serial.println(" ");
+        Serial.print(packetbuffer[i], HEX); Serial.print(" ");
     }
-    Serial.println();
+    Serial.println("");
 #endif
     
     return uid;
@@ -129,15 +129,9 @@ boolean Mifare::readPayload (uint8_t * output, uint8_t lengthLimit){
 #endif
     switch (cardType) {
         case MIFARE_CLASSIC:
-#ifdef MIFAREDEBUG
-            Serial.println("mifare classic");
-#endif
             return classic_readPayload(output, lengthLimit);
             break;
         case MIFARE_ULTRALIGHT:
-#ifdef MIFAREDEBUG
-            Serial.println("mifare ultralight");
-#endif
             return ultralight_readPayload(output, lengthLimit);
             break;
         default:
@@ -213,16 +207,16 @@ boolean Mifare::ultralight_readPayload (uint8_t * output, uint8_t lengthLimit){
 //get type of card and write the payload using either classic or ultralight
 //assumes payload is pre-formated with its own header
 
-boolean Mifare::writePayload (uint8_t *payload){
-   if (!readTarget())
+boolean Mifare::writePayload (uint8_t *payload, uint8_t length){
+    if (!readTarget())
         return false;
     
     switch (cardType) {
         case MIFARE_CLASSIC:
-            return classic_writePayload(payload);
+            return classic_writePayload(payload, length);
             break;
         case MIFARE_ULTRALIGHT:
-            return ultralight_writePayload(payload);
+            return ultralight_writePayload(payload, length);
             break;
         default:
             return false;
@@ -237,11 +231,10 @@ boolean Mifare::writePayload (uint8_t *payload){
  writes in sectors of 4 blocks
  every 4th writes a pre-defined sector footer which contains a security key which is hardcoded right now :TODO re-write to make security key match the static class keys
  */
-boolean Mifare::classic_writePayload (uint8_t *payload){
-    const uint8_t zero[16] PROGMEM = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    const uint8_t foot[16] PROGMEM = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x07, 0x80, 0x69, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+boolean Mifare::classic_writePayload (uint8_t *payload, uint8_t len){
+    const uint8_t zero[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    const uint8_t foot[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x07, 0x80, 0x69, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     
-    uint8_t len = strlen((char*)payload);
     uint8_t block_buffer[16] = {};
     uint8_t start_block = 4;
     
@@ -272,10 +265,10 @@ boolean Mifare::classic_writePayload (uint8_t *payload){
             
         }else if (block_count %4 == 3) {
             //close sector with footer block
-            memcpy_P(block_buffer, foot, 16);
+            memcpy(block_buffer, foot, 16);
             if (!classic_writeMemoryBlock(block_count, block_buffer))
                 return false;
-            memcpy_P(block_buffer, zero, 16);
+            memcpy(block_buffer, zero, 16);
             block_count ++;
             byte_count = 0;
         }
@@ -288,13 +281,13 @@ boolean Mifare::classic_writePayload (uint8_t *payload){
     }
     //fill any empty blocks in the sector
     while (block_count %4 < 3) {
-        memcpy_P(block_buffer, zero, 16);
+        memcpy(block_buffer, zero, 16);
         if (!classic_writeMemoryBlock(block_count, block_buffer))
             return false;        block_count ++;
     }
 
     //write final footer block
-    memcpy_P(block_buffer, foot, 16);
+    memcpy(block_buffer, foot, 16);
     if (!classic_writeMemoryBlock(block_count, block_buffer))
         return false;
     
@@ -306,10 +299,9 @@ boolean Mifare::classic_writePayload (uint8_t *payload){
  writes until it fills the card, no footer or anything needed here. 
  */
 
-boolean Mifare::ultralight_writePayload (uint8_t *payload){
-    const uint8_t zero[4] PROGMEM= {0x00, 0x00, 0x00, 0x00};
+boolean Mifare::ultralight_writePayload (uint8_t *payload, uint8_t len){
+    const uint8_t zero[4] = {0x00, 0x00, 0x00, 0x00};
     
-    uint8_t len = strlen((char*)payload);
     uint8_t block_buffer[4] = {};
     uint8_t start_block = 4;
     
@@ -317,13 +309,14 @@ boolean Mifare::ultralight_writePayload (uint8_t *payload){
     uint8_t block_count = start_block;
     uint8_t byte_count = 0;
     
+    Serial.print("len");Serial.println(len);
     
     while (position < len){
         memcpy (block_buffer+byte_count, payload+position, 1);
             
         byte_count ++;
         position ++;
-            
+        Serial.println(byte_count);
         if (byte_count == 4 ) {
             //end of block
             byte_count = 0;
@@ -333,7 +326,7 @@ boolean Mifare::ultralight_writePayload (uint8_t *payload){
                 return false;
                 
             //reset
-            memcpy_P(block_buffer, zero, 16);
+            memcpy(block_buffer, zero, 16);
             block_count ++;
         }
 
@@ -367,7 +360,7 @@ boolean Mifare::ultralight_writePayload (uint8_t *payload){
 boolean Mifare::classic_authenticateBlock (uint32_t blockNumber){
     
 #ifdef MIFAREDEBUG
-    Serial.print("Trying to authenticate card ");
+    Serial.println("authenticating");
 #endif
    
     // Prepare the authentication command //
@@ -472,13 +465,11 @@ boolean Mifare::classic_writeMemoryBlock (uint8_t blockaddress, uint8_t * block)
     
     packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
     packetbuffer[1] = 1;  // either card 1 or 2 (tested for card 1)
-    packetbuffer[2] = MIFARE_CMD_WRITE;
+    packetbuffer[2] = MIFARE_CMD_WRITE_CLASSIC;
     packetbuffer[3] = blockaddress;
     
-    for(uint8_t byte=0; byte <16; byte++) {
-        packetbuffer[4+byte] = block[byte];
-    }
-    
+    memcpy(packetbuffer+4, block, 16);
+        
     if (! board->sendCommandCheckAck(packetbuffer, 20))
         return false;
     // read data packet
@@ -488,8 +479,9 @@ boolean Mifare::classic_writeMemoryBlock (uint8_t blockaddress, uint8_t * block)
     // check some basic stuff
     Serial.println("WRITE");
     for(uint8_t i=0;i<2+6;i++) {
-        Serial.print(packetbuffer[i], HEX); Serial.println(" ");
+        Serial.print(packetbuffer[i], HEX); Serial.print(" ");
     }
+    Serial.println("");
 #endif
     
     if((packetbuffer[6] == 0x41) && (packetbuffer[7] == 0x00)) {
@@ -572,12 +564,10 @@ boolean Mifare::ultralight_writeMemoryBlock (uint8_t blockaddress, uint8_t *bloc
     
     packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
     packetbuffer[1] = 1;                   /* Card number */
-    packetbuffer[2] = MIFARE_CMD_WRITE;
+    packetbuffer[2] = MIFARE_CMD_WRITE_ULTRALIGHT;
     packetbuffer[3] = blockaddress;         /* Page Number (0..63 in most cases) */
     
-    for(uint8_t byte=0; byte <4; byte++) {
-        packetbuffer[4+byte] = block[byte];
-    }
+    memcpy(packetbuffer +4, block, 4);
     
     if (! board->sendCommandCheckAck(packetbuffer, 8))
         return false;

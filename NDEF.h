@@ -48,14 +48,22 @@
 #define NDEF_URIPREFIX_URN_EPC              (0x22)
 #define NDEF_URIPREFIX_URN_NFC              (0x23)
 
-#define BUFFER_SIZE 160
+#define NDEF_TYPE_URL                       (85)
+#define NDEF_TYPE_TEXT                      (84)
+#define NDEF_TYPE_SMART_POSTER              (83)
+
+#define NDEF_STANDARD_TNF                   (0xD1)
+
+
+#define NDEF_BUFFER_SIZE 224
 //#define DEBUG
 
 class NDEF{
   public:
     NDEF();
 	char * decode_message(uint8_t * msg);
-	boolean	encode_message(uint8_t type, uint8_t * msg);
+	uint8_t	encode_URL(uint8_t uriPrefix, uint8_t * msg);
+    uint8_t encode_TEXT(uint8_t * lang, uint8_t * msg);
 	
   private:
 //    char * get_type_description(uint8_t b);

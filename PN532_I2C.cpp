@@ -196,13 +196,22 @@ void PN532_I2C::readdata(uint8_t* buffer, uint8_t length) {
  */
 /**************************************************************************/
 void PN532_I2C::sendcommand(uint8_t* cmd, uint8_t cmdlen) {
+#ifdef PN532DEBUG
+    Serial.println("command in:");
+    for (uint8_t i=0; i<cmdlen; i++) {
+        Serial.print(" 0x"); Serial.print(cmd[i], HEX);
+    }
+    Serial.println("");
+#endif
+    
+    
     uint8_t checksum;
     
     cmdlen++;
     
 #ifdef PN532DEBUG
     Serial.print("\nSending: ");
-    Serial.print(cmdlen);
+    Serial.println(cmdlen);
 #endif
     
     delay(2);     // or whatever the delay is for waking up the board
@@ -227,13 +236,14 @@ void PN532_I2C::sendcommand(uint8_t* cmd, uint8_t cmdlen) {
     Serial.print(" 0x"); Serial.print(cmdlen, HEX);
     Serial.print(" 0x"); Serial.print(~cmdlen + 1, HEX);
     Serial.print(" 0x"); Serial.print(PN532_HOSTTOPN532, HEX);
+    Serial.println("");
 #endif
     
     for (uint8_t i=0; i<cmdlen-1; i++) {
         wiresend(cmd[i]);
         checksum += cmd[i];
 #ifdef PN532DEBUG
-        Serial.print(" _0x"); Serial.print(cmd[i], HEX);
+        Serial.print(" 0x"); Serial.print(cmd[i], HEX);
 #endif
     }
     
@@ -242,9 +252,10 @@ void PN532_I2C::sendcommand(uint8_t* cmd, uint8_t cmdlen) {
     Wire.endTransmission();
     
 #ifdef PN532DEBUG
+    Serial.println("");
     Serial.print(" 0x"); Serial.print(~checksum, HEX);
     Serial.print(" 0x"); Serial.print(PN532_POSTAMBLE, HEX);
-    Serial.println();
+    Serial.println("");
 #endif
 } 
 

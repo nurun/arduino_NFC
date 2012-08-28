@@ -9,7 +9,8 @@
 #define MIFARE_CMD_AUTH_A                   (0x60)
 #define MIFARE_CMD_AUTH_B                   (0x61)
 #define MIFARE_CMD_READ                     (0x30)
-#define MIFARE_CMD_WRITE                    (0xA0)
+#define MIFARE_CMD_WRITE_CLASSIC            (0xA0)
+#define MIFARE_CMD_WRITE_ULTRALIGHT         (0xA2)
 #define MIFARE_CMD_TRANSFER                 (0xB0)
 #define MIFARE_CMD_DECREMENT                (0xC0)
 #define MIFARE_CMD_INCREMENT                (0xC1)
@@ -39,18 +40,18 @@ class Mifare{
     uint8_t* readTarget(void);
     
     boolean readPayload(uint8_t * output , uint8_t lengthLimit);
-    boolean writePayload(uint8_t * payload);
+    boolean writePayload(uint8_t * payload, uint8_t length);
     
   private:
     boolean classic_authenticateBlock (uint32_t blockNumber);
     
     boolean classic_readPayload(uint8_t * output, uint8_t lengthLimit);
-    boolean classic_writePayload(uint8_t * payload);
+    boolean classic_writePayload(uint8_t * payload, uint8_t length);
     boolean classic_readMemoryBlock(uint8_t blockaddress, uint8_t * block);
     boolean classic_writeMemoryBlock(uint8_t blockaddress, uint8_t * block);
     
     boolean ultralight_readPayload(uint8_t * output, uint8_t lengthLimit);
-    boolean ultralight_writePayload(uint8_t * payload);
+    boolean ultralight_writePayload(uint8_t * payload, uint8_t length);
     boolean ultralight_readMemoryBlock(uint8_t blockaddress, uint8_t *block);
     boolean ultralight_writeMemoryBlock(uint8_t blockaddress, uint8_t *block);
     

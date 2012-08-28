@@ -71,17 +71,17 @@ char * NDEF::decode_message(uint8_t * msg) {
         memcpy(msg, msg + offset, payloadLength);
         offset += payloadLength;
         char lang [2];
-        char text [BUFFER_SIZE];
-        char uri [BUFFER_SIZE];
+        char text [NDEF_BUFFER_SIZE];
+        char uri [NDEF_BUFFER_SIZE];
         switch (type) {
-            case 85:
+            case NDEF_TYPE_URL:
                 if(parse_uri(msg, payloadLength, uri)){
                     Serial.print("uri: "); Serial.println(uri);
                 }else{
                     Serial.println("err");
                 }
                 break;
-            case 84:
+            case NDEF_TYPE_TEXT:
                 if(parse_text(msg, payloadLength, lang, text)) {
                     Serial.print("lang: "); Serial.println(lang);
                     Serial.print("text: "); Serial.println(text);
@@ -90,7 +90,7 @@ char * NDEF::decode_message(uint8_t * msg) {
                 }
 
                 break;
-            case 83:
+            case NDEF_TYPE_SMART_POSTER:
 //              Serial.println("Found Smart Poster - Begin");
 //              parse_ndef_message(payload);
 //              Serial.println("Smart Poster - End");
@@ -107,6 +107,53 @@ char * NDEF::decode_message(uint8_t * msg) {
     return "";
 }
 
+/**
+ * encodes the NDEF message attaches the proper formatted header and terminating character
+ *
+ * @param type          supports: NDEF_TYPE_URL or NDEF_TYPE_TEXT
+ * @param msg           the payload
+ * @param uriPrefix     optional if you are using a URI prefix
+ * @return              length of the encoded message
+ */
+
+uint8_t	NDEF::encode_URL(uint8_t uriPrefix, uint8_t * msg){
+    uint8_t len = strlen((char *)msg);
+    uint8_t payload_head[9] = {0x00, 0x00, 0x03, len+5, 0xD1, 0x01, len+1, 0x55, uriPrefix};
+
+    memmove(msg+9, msg, len);
+    memcpy(msg+0, payload_head, 9);
+   
+#ifdef DEBUG
+    for (uint8_t i = 0 ; i < len + 9; i++) {
+        Serial.print(msg[i], HEX);Serial.print(" ");
+    }
+    Serial.println("");
+#endif    
+    
+    return len + 9;
+    
+}
+uint8_t NDEF::encode_TEXT(uint8_t * lang, uint8_t * msg){
+    uint8_t len = strlen((char *)msg);
+
+    uint8_t payload_head[10] = {0x00, 0x00, 0x03, len+5, 0xD1, 0x01, len+2, 0x54, lang[0], lang[1]};
+    
+    memmove(msg+10, msg, len);
+    memcpy(msg, payload_head, 10);
+
+#ifdef DEBUG
+    for (uint8_t i = 0 ; i < len + 10; i++) {
+        Serial.print(msg[i], HEX);Serial.print(" ");
+    }
+    Serial.println("");
+#endif
+    
+    return len + 10;
+    
+}
+
+
+
 
 
 /**
@@ -118,6 +165,7 @@ char * NDEF::decode_message(uint8_t * msg) {
  * @return              whether or not the msg was successfully
  *                      filled
  */
+
 //bool NdefDecode::get_ndef_message_from_dump(uint8_t* dump, uint8_t * msg)
 //{
 //    int tlv_len = 0;
@@ -138,6 +186,8 @@ char * NDEF::decode_message(uint8_t * msg) {
  * Convert TNF bits to Type (used for debug only). This is specified in
  * section 3.2.6 "TNF (Type Name Format)" of "NFC Data Exchange Format
  * (NDEF) Technical Specification".
+ *
+ * (we don't really need this)
  *
  * @param IN  b  the value of the last 3 bits of the NDEF record header
  * @return       the human readable type of the NDEF record

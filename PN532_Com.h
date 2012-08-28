@@ -57,7 +57,7 @@
 
 #define PN532_PACKBUFFSIZE                  (32)
 
-//#define PN532DEBUG
+//#define PN532DEBUG 1
 
 
 class PN532{
