@@ -431,19 +431,15 @@ boolean Mifare::classic_readMemoryBlock(uint8_t blockaddress, uint8_t * block) {
     
     // read data packet
     board->readdata(packetbuffer, 24);
-    // check some basic stuff
+   
 #ifdef MIFAREDEBUG
-    Serial.println("READ");
-#endif
     for(uint8_t i=8;i<24;i++) {
-        block[i-8] = packetbuffer[i];
-//#ifdef MIFAREDEBUG
         Serial.print(packetbuffer[i], HEX); Serial.print(" ");
-//#endif
     }
-//#ifdef MIFAREDEBUG
     Serial.println("");
-//#endif
+#endif
+    memcpy (block, packetbuffer+8, 16);
+    
     if((packetbuffer[6] == 0x41) && (packetbuffer[7] == 0x00)){
         return true;
     }else{
@@ -535,13 +531,12 @@ boolean Mifare::ultralight_readMemoryBlock (uint8_t blockaddress, uint8_t *block
     Serial.println("Received");
 #endif
     
-//#ifdef MIFAREDEBUG
+#ifdef MIFAREDEBUG
     for(uint8_t i=8;i<12;i++) {
-//        block[i-8] = packetbuffer[i];
          Serial.print(packetbuffer[i], HEX); Serial.print(" ");
     }
     Serial.println("");
-//#endif
+#endif
     
     /* If byte 8 isn't 0x00 we probably have an error */
     if (packetbuffer[7] == 0x00) {
