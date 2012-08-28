@@ -11,7 +11,7 @@ NDEF::NDEF(){
  * @param IN msg  The NDEF message
  * @return             whether or not the parsing succeeds
  */
-char * NDEF::decode_message(char * msg) {
+char * NDEF::decode_message(uint8_t * msg) {
     int offset = 2;
     
     bool me;
@@ -57,34 +57,32 @@ char * NDEF::decode_message(char * msg) {
             offset++;
         }
         
-        
         uint8_t type = *(msg + offset);
 		
         offset += typeLength;
         
-        uint8_t *id;
         if (il) {
-            id =  (uint8_t *)malloc(idLength);
-            memcpy(id, msg + offset, idLength);
             offset += idLength;
         }
 #ifdef DEBUG
         Serial.print("TYPE "); Serial.println((char)type);
 #endif
-        uint8_t *payload = (uint8_t *)malloc(payloadLength);
         
-        memcpy(payload, msg + offset, payloadLength);
+        memcpy(msg, msg + offset, payloadLength);
         offset += payloadLength;
-        char *lang;
-        char *text;
-        char * uri;
+        char lang [2];
+        char text [BUFFER_SIZE];
+        char uri [BUFFER_SIZE];
         switch (type) {
             case 85:
-                uri = parse_uri(payload, payloadLength);
-                Serial.print("uri: "); Serial.println(uri);
+                if(parse_uri(msg, payloadLength, uri)){
+                    Serial.print("uri: "); Serial.println(uri);
+                }else{
+                    Serial.println("err");
+                }
                 break;
             case 84:
-                if(parse_text(payload, payloadLength, &lang, &text)) {
+                if(parse_text(msg, payloadLength, lang, text)) {
                     Serial.print("lang: "); Serial.println(lang);
                     Serial.print("text: "); Serial.println(text);
                 } else {
@@ -108,11 +106,6 @@ char * NDEF::decode_message(char * msg) {
     
     return "";
 }
-
-
-
-
-
 
 
 
@@ -186,7 +179,7 @@ char * NDEF::decode_message(char * msg) {
  * @param IN  b  the code of the URI to convert to the actual prefix
  * @return       the URI prefix
  */
-char *NDEF::get_uri_prefix(uint8_t b)
+char * NDEF::get_uri_prefix(uint8_t b)
 {
     /*
      * Section 3.2.2 "URI Identifier Code" of "URI Record Type Definition
@@ -277,18 +270,18 @@ char *NDEF::get_uri_prefix(uint8_t b)
  * @param IN payload_len  The length of the NDEF URI payload
  * @return                The full reconstructed URI
  */
-char * NDEF::parse_uri(uint8_t * payload, int payload_len){
-	char *prefix = get_uri_prefix(*payload);
+boolean NDEF::parse_uri(uint8_t * payload, int payload_len, char * uri ){
+	char * prefix = get_uri_prefix(payload[0]);
     int prefix_len = strlen(prefix);
-    char *url = (char*)malloc(prefix_len + payload_len);
-    memcpy(url, prefix, prefix_len);
-    memcpy(url + prefix_len, payload + 1, payload_len - 1);
-    *(url + prefix_len + payload_len - 1) = 0x00;
+    
+    memcpy(uri, prefix, prefix_len);
+    memcpy(uri + prefix_len, payload + 1, payload_len - 1);
+    *(uri + prefix_len + payload_len - 1) = 0x00;
 #ifdef DEBUG
         Serial.println(url);
 #endif 
 
-    return url;
+    return true;
 }
 
 /**
@@ -300,35 +293,28 @@ char * NDEF::parse_uri(uint8_t * payload, int payload_len){
  * @param OUT text        The text contained in NDEF Text Record
  * @return                Success or not.
  */
-char * NDEF::parse_text(uint8_t * payload, int payload_len, char ** lang, char ** text)
-{
-    //    if (DEBUG) print_hex(payload);
+boolean NDEF::parse_text(uint8_t * payload, int payload_len, char * lang, char * text){
     bool utf16_format = ((payload[0] & 0x80) == 0x80);
     bool rfu = ((payload[0] & 0x40) == 0x40);
     if(rfu) {
         Serial.println("ERROR: RFU should be set to zero.");
-        return 0;
+        return false;
     }
     
-    int lang_len = payload[0] & 0x3F;
-    (*lang) = (char*) malloc(lang_len +1);
-    memcpy(*lang, payload + 1, lang_len);
-    (*lang)[lang_len] = '\0';
+    memcpy(lang, payload + 1, 2);
+    *(lang + 2) = 0x00;
     
-    const int text_len = payload_len - lang_len;
+    const int text_len = payload_len - 2;
     
 #ifdef DEBUG
         Serial.print("Format: "); Serial.println((char *)utf16_format);
 //        p("Format: %s, RFU=%d, IANA language code lenght=%d, text lenght=%d\n", utf16_format ? "UTF-16" : "UTF-8", rfu, lang_len, text_len);
 #endif
 
-
-
-    (*text) =  (char*)malloc(text_len+1);
-    memcpy(*text, payload + 1 + lang_len, text_len);
-    (*text)[text_len] = L'\0';
+    memcpy(text, payload + 3, text_len);
+    *(text + text_len) = 0x00;
     
-    return *text;
+    return true;
 }
 
 

@@ -48,20 +48,20 @@
 #define NDEF_URIPREFIX_URN_EPC              (0x22)
 #define NDEF_URIPREFIX_URN_NFC              (0x23)
 
-//#define BUFFER_SIZE 512
+#define BUFFER_SIZE 160
 //#define DEBUG
 
 class NDEF{
   public:
     NDEF();
-	char * decode_message(char * msg);
+	char * decode_message(uint8_t * msg);
 	boolean	encode_message(uint8_t type, uint8_t * msg);
 	
   private:
 //    char * get_type_description(uint8_t b);
     char * get_uri_prefix(uint8_t b);
-    char * parse_uri(uint8_t * payload, int payload_len);
-    char * parse_text(uint8_t * payload, int payload_len, char ** lang, char ** text);
+    boolean parse_uri(uint8_t * payload, int payload_len, char * uri);
+    boolean parse_text(uint8_t * payload, int payload_len, char * lang, char * text);
 };
 
 #endif
