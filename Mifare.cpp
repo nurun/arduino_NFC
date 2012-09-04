@@ -58,7 +58,7 @@ uint8_t* Mifare::readTarget(uint16_t timeout) {
     {
         if (timeout != 0) {
           timer+=10;
-          if (timer > 1000*10){
+          if (timer > timeout){
              return 0;
           }
         }
