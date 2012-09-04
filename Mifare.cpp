@@ -35,7 +35,7 @@ boolean Mifare::SAMConfig() {
  @returns a pointer to the uid array or 0 if it fails
  */
 /**************************************************************************/
-uint8_t* Mifare::readTarget() {
+uint8_t* Mifare::readTarget(uint16_t timeout) {
 
     packetbuffer[0] = PN532_COMMAND_INLISTPASSIVETARGET;
     packetbuffer[1] = 1;  // max 1 cards at once (we can set this to 2 later)
@@ -52,8 +52,16 @@ uint8_t* Mifare::readTarget() {
 #ifdef MIFAREDEBUG
     Serial.println("Waiting for card");
 #endif
+
+    uint16_t timer = 0;
     while (board->readstatus() != PN532_READY)
     {
+        if (timeout != 0) {
+          timer+=10;
+          if (timer > 1000*10){
+             return 0;
+          }
+        }
         delay(10);
     }
     

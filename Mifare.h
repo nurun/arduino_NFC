@@ -37,7 +37,7 @@ class Mifare{
     static uint32_t cardType;
     
 	boolean SAMConfig(void);
-    uint8_t* readTarget(void);
+    uint8_t* readTarget(uint16_t timeout = 0);
     
     boolean readPayload(uint8_t * output , uint8_t lengthLimit);
     boolean writePayload(uint8_t * payload, uint8_t length);
