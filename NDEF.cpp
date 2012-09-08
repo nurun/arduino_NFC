@@ -77,6 +77,7 @@ char * NDEF::decode_message(uint8_t * msg) {
             case NDEF_TYPE_URL:
                 if(parse_uri(msg, payloadLength, uri)){
                     Serial.print("uri: "); Serial.println(uri);
+                    return uri;
                 }else{
                     Serial.println("err");
                 }
