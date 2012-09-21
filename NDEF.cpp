@@ -151,40 +151,40 @@ uint8_t	NDEF::encode_URI(uint8_t uriPrefix, uint8_t * msg){
 }
 uint8_t NDEF::encode_TEXT(uint8_t * lang, uint8_t * msg){
     uint8_t len = strlen((char *)msg);
-    Serial.print("len "); Serial.println(len);
 
     uint8_t record_header = encode_record_header(1, 1, 0, 1, 0, NDEF_WELL_KNOWN_RECORD);
    
     uint8_t payload_head[9] = {0x03, len+7, record_header, 0x01, len+3, 0x54, 0x02, lang[0], lang[1]};
     const uint8_t term[1] ={0xFE};
     
-    memmove(msg+9, msg, len);
+    memmove(msg + 9, msg, len);
     memcpy(msg, payload_head, 9);
-    memcpy(msg + len + 9, term , 1);
-//#ifdef DEBUG
+    memcpy(msg + 9 + len, term , 1);
+#ifdef DEBUG
     for (uint8_t i = 0 ; i < len + 10; i++) {
         Serial.print(msg[i], HEX);Serial.print(" ");
     }
     Serial.println("");
-//#endif
+#endif
     
-    return len + 9;
+    return len + 10;
     
 }
 
-uint8_t NDEF::encode_MIME(uint8_t * mimetype, uint8_t * data){
-    uint8_t len = strlen((char *)data);
+uint8_t NDEF::encode_MIME(uint8_t * mimetype, uint8_t * data, uint8_t len){
     uint8_t typeLen = strlen((char *) mimetype);
     
     uint8_t record_header = encode_record_header(1, 1, 0, 1, 0, NDEF_MIME_TYPE_RECORD);
     
-    uint8_t payload_head[5] = {0x03, len+3+typeLen, record_header, typeLen, len};
-    
-    memmove(data+typeLen, data, typeLen + 5);
+    uint8_t payload_head[5] = {0x03, len + typeLen + 3, record_header, typeLen, len};
+    const uint8_t term[1] ={0xFE};
+
+    memmove(data + 5 + typeLen, data, len);
     memcpy(data, payload_head, 5);
-    memcpy(data+5, mimetype, typeLen);
+    memcpy(data + 5, mimetype, typeLen);
+    memcpy(data + 5 + typeLen + len,  term , 1);
     
-    return 1;
+    return typeLen + len + 6;
 }
 
 uint8_t NDEF::encode_record_header(bool mb, bool me, bool cf, bool sr, bool il, uint8_t tnf){

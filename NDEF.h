@@ -71,7 +71,7 @@ class NDEF{
 	FOUND_MESSAGE decode_message(uint8_t * msg);
 	uint8_t	encode_URI(uint8_t uriPrefix, uint8_t * msg);
     uint8_t encode_TEXT(uint8_t * lang, uint8_t * msg);
-    uint8_t encode_MIME(uint8_t * mimetype, uint8_t * data);
+    uint8_t encode_MIME(uint8_t * mimetype, uint8_t * data, uint8_t len);
 	
   private:
     uint8_t encode_record_header(bool mb, bool me, bool cf, bool sr, bool il, uint8_t tnf);
