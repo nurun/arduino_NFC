@@ -8,8 +8,8 @@ NDEF::NDEF(){
  * Parse the actual NDEF message and call specific handlers for dealing with
  * a particular type of NDEF message.
  *
- * @param IN msg  The NDEF message
- * @return             whether or not the parsing succeeds
+ * @param msg  The NDEF message
+ * @return     struct FOUND_MESSAGE which contains type, format, and the actual payload
  */
 FOUND_MESSAGE NDEF::decode_message(uint8_t * msg) {
     int offset = 2;
@@ -118,15 +118,12 @@ FOUND_MESSAGE NDEF::decode_message(uint8_t * msg) {
 }
 
 /**
- * encodes the NDEF message attaches the proper formatted header and terminating character
+ * encodes the URI message attaches the proper formatted header and terminating character
  *
- * @param type          supports: NDEF_TYPE_URI or NDEF_TYPE_TEXT
+ * @param uriPrefix     URI prefix char
  * @param msg           the payload
- * @param uriPrefix     optional if you are using a URI prefix
  * @return              length of the encoded message
  */
-
-
 
 uint8_t	NDEF::encode_URI(uint8_t uriPrefix, uint8_t * msg){
     uint8_t len = strlen((char *)msg);
@@ -149,6 +146,15 @@ uint8_t	NDEF::encode_URI(uint8_t uriPrefix, uint8_t * msg){
     return len + 8;
     
 }
+
+/**
+ * encodes the TEXT message attaches the proper formatted header and terminating character
+ *
+ * @param lang          2 letter language code ie 'en, de, es'
+ * @param msg           the payload
+ * @return              length of the encoded message
+ */
+
 uint8_t NDEF::encode_TEXT(uint8_t * lang, uint8_t * msg){
     uint8_t len = strlen((char *)msg);
 
@@ -170,6 +176,15 @@ uint8_t NDEF::encode_TEXT(uint8_t * lang, uint8_t * msg){
     return len + 10;
 }
 
+/**
+ * encodes the MIME message attaches the proper formatted header and terminating character
+ *
+ * @param mimetype      char array of the mimetype ie "image/gif"
+ * @param data          the payload
+ * @param length        length of the payload
+ * @return              length of the encoded message
+ */
+
 uint8_t NDEF::encode_MIME(uint8_t * mimetype, uint8_t * data, uint8_t len){
     uint8_t typeLen = strlen((char *) mimetype);
     
@@ -185,6 +200,18 @@ uint8_t NDEF::encode_MIME(uint8_t * mimetype, uint8_t * data, uint8_t len){
     
     return typeLen + len + 6;
 }
+
+/**
+ * helper function to create the binary encoded header type byte for the ndef header
+ *
+ * @param mb           Message Begin
+ * @param me           Message End
+ * @param cf           Chunk Flag
+ * @param sr           Short Record
+ * @param il           ID Length Present
+ * @param tnf          Type Name Field
+ * @return             binary encoded header type byte (ie D1, D2, etc)
+ */
 
 uint8_t NDEF::encode_record_header(bool mb, bool me, bool cf, bool sr, bool il, uint8_t tnf){
     uint8_t record_header = 0;
@@ -212,19 +239,13 @@ uint8_t NDEF::encode_record_header(bool mb, bool me, bool cf, bool sr, bool il, 
  * 3.2.2 "URI Identifier Code" of "URI Record Type Definition Technical
  * Specification".
  *
- 
- !! comment out ones you don't want to support to save memory size, they add up to alot! 
- 
- 
- * @param IN  b  the code of the URI to convert to the actual prefix
+ * !!! comment out ones you don't want to support to save memory size, they add up to alot!
+ *
+ * @param b      the code of the URI to convert to the actual prefix
  * @return       the URI prefix
  */
 char * NDEF::get_uri_prefix(uint8_t b)
 {
-    /*
-     * Section 3.2.2 "URI Identifier Code" of "URI Record Type Definition
-     * Technical Specification"
-     */
     switch (b) {
         case 0x00:
             return "";
@@ -306,9 +327,9 @@ char * NDEF::get_uri_prefix(uint8_t b)
 /**
  * Concatenates the prefix with the contents of the NDEF URI record.
  *
- * @param IN payload      The NDEF URI payload
- * @param IN payload_len  The length of the NDEF URI payload
- * @return                The full reconstructed URI
+ * @param payload      The NDEF URI payload
+ * @param payload_len  The length of the NDEF URI payload
+ * @return             The full reconstructed URI
  */
 bool NDEF::parse_uri(uint8_t * payload, int payload_len, char * uri ){
 	char * prefix = get_uri_prefix(payload[0]);
@@ -325,13 +346,13 @@ bool NDEF::parse_uri(uint8_t * payload, int payload_len, char * uri ){
 }
 
 /**
- * Concatenates the prefix with the contents of the NDEF URI record.
+ * Concatenates the lang prefix with the contents of the NDEF TEXT record.
  *
- * @param IN payload      The NDEF Text Record payload
- * @param IN payload_len  The length of the NDEF Text Record payload
- * @param OUT lang        The IANA language code lenght
- * @param OUT text        The text contained in NDEF Text Record
- * @return                Success or not.
+ * @param payload      The NDEF Text Record payload
+ * @param payload_len  The length of the NDEF Text Record payload
+ * @param lang         The IANA language code lenght
+ * @param text         The text contained in NDEF Text Record
+ * @return             Success or not.
  */
 bool NDEF::parse_text(uint8_t * payload, int payload_len, char * lang, char * text){
     bool utf16_format = ((payload[0] & 0x80) == 0x80);
@@ -348,7 +369,6 @@ bool NDEF::parse_text(uint8_t * payload, int payload_len, char * lang, char * te
     
 #ifdef DEBUG
         Serial.print("Format: "); Serial.println((char *)utf16_format);
-//        p("Format: %s, RFU=%d, IANA language code lenght=%d, text lenght=%d\n", utf16_format ? "UTF-16" : "UTF-8", rfu, lang_len, text_len);
 #endif
 
     memcpy(text, payload + 3, text_len);

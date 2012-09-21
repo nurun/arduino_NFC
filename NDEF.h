@@ -52,7 +52,6 @@
 #define NDEF_TYPE_URI                       (85)
 #define NDEF_TYPE_TEXT                      (84)
 
-//for single record, well known type ndef record.
 #define NDEF_WELL_KNOWN_RECORD              (0x01)
 #define NDEF_MIME_TYPE_RECORD               (0x02)
 
