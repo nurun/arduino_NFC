@@ -49,14 +49,12 @@ uint8_t Mifare::keyB[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 uint32_t Mifare::cardType = 0; //will get overwritten if it finds a different card
 
 #include <NDEF.h>
-//#include <MIME.h>
 
 #define PAYLOAD_SIZE 224
 uint8_t payload[PAYLOAD_SIZE] = {};
 
 void setup(void) {
   Serial.begin(115200);
-//  Serial.println("ok");
 
   board->begin();
 
