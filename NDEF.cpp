@@ -151,21 +151,22 @@ uint8_t	NDEF::encode_URI(uint8_t uriPrefix, uint8_t * msg){
 }
 uint8_t NDEF::encode_TEXT(uint8_t * lang, uint8_t * msg){
     uint8_t len = strlen((char *)msg);
+    Serial.print("len "); Serial.println(len);
 
     uint8_t record_header = encode_record_header(1, 1, 0, 1, 0, NDEF_WELL_KNOWN_RECORD);
    
-    uint8_t payload_head[8] = {0x03, len+5, record_header, 0x01, len+2, 0x54, lang[0], lang[1]};
+    uint8_t payload_head[9] = {0x03, len+7, record_header, 0x01, len+3, 0x54, 0x02, lang[0], lang[1]};
     const uint8_t term[1] ={0xFE};
     
-    memmove(msg+8, msg, len);
-    memcpy(msg, payload_head, 8);
-    memcpy(msg + len + 8, term , 1);
-#ifdef DEBUG
-    for (uint8_t i = 0 ; i < len + 9; i++) {
+    memmove(msg+9, msg, len);
+    memcpy(msg, payload_head, 9);
+    memcpy(msg + len + 9, term , 1);
+//#ifdef DEBUG
+    for (uint8_t i = 0 ; i < len + 10; i++) {
         Serial.print(msg[i], HEX);Serial.print(" ");
     }
     Serial.println("");
-#endif
+//#endif
     
     return len + 9;
     

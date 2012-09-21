@@ -348,14 +348,11 @@ boolean Mifare::ultralight_writePayload (uint8_t *payload, uint8_t len){
     uint8_t block_count = start_block;
     uint8_t byte_count = 0;
     
-    Serial.print("len");Serial.println(len);
-    
     while (position < len){
         memcpy (block_buffer+byte_count, payload+position, 1);
             
         byte_count ++;
         position ++;
-        Serial.println(byte_count);
         if (byte_count == 4 ) {
             //end of block
             byte_count = 0;
