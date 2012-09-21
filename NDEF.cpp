@@ -168,7 +168,6 @@ uint8_t NDEF::encode_TEXT(uint8_t * lang, uint8_t * msg){
 #endif
     
     return len + 10;
-    
 }
 
 uint8_t NDEF::encode_MIME(uint8_t * mimetype, uint8_t * data, uint8_t len){
