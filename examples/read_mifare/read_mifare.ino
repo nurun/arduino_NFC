@@ -44,8 +44,8 @@ PN532 * board = new PN532_I2C(IRQ, RESET);
 Mifare mifare;
 //init keys for reading classic
 uint8_t Mifare::useKey = KEY_A;
-uint8_t Mifare::keyB[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-uint8_t Mifare::keyA[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+uint8_t Mifare::keyA[6] = {0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7 };
+uint8_t Mifare::keyB[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 uint32_t Mifare::cardType = 0; //will get overwritten if it finds a different card
 
 #include <NDEF.h>
@@ -96,8 +96,28 @@ void loop(void) {
     
       mifare.readPayload(payload, PAYLOAD_SIZE);
   
-      NDEF().decode_message(payload);
-
+      FOUND_MESSAGE m = NDEF().decode_message(payload);
+      
+      switch(m.type){
+       case NDEF_TYPE_URI:
+         Serial.print("URI: ");
+         Serial.println((int)m.format);
+         Serial.println((char*) m.payload); 
+        break;
+       case NDEF_TYPE_TEXT:
+         Serial.print("TEXT: "); 
+         Serial.println(m.format);
+         Serial.println((char*)m.payload);
+        break;
+       case NDEF_TYPE_MIME:
+         Serial.print("MIME: "); 
+         Serial.println(m.format);
+         Serial.println((char*)m.payload);
+        break;
+       default:
+         Serial.println("unsupported");
+        break; 
+      }  
  }
  delay(5000);
 }

@@ -259,11 +259,14 @@ boolean Mifare::writePayload (uint8_t *payload, uint8_t length){
  starts in block 4
  blocks are 16 bytes long
  writes in sectors of 4 blocks
- every 4th writes a pre-defined sector footer which contains a security key which is hardcoded right now :TODO re-write to make security key match the static class keys
+ every 4th writes a pre-defined sector footer which contains a security key which is hardcoded right 
  */
 boolean Mifare::classic_writePayload (uint8_t *payload, uint8_t len){
     const uint8_t zero[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    const uint8_t foot[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x07, 0x80, 0x69, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    uint8_t foot[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7F, 0x07, 0x88, 0x40, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    
+    memcpy(foot, keyA, 6);
+    memcpy(foot+10, keyB, 6);
     
     uint8_t block_buffer[16] = {};
     uint8_t start_block = 4;

@@ -48,28 +48,39 @@
 #define NDEF_URIPREFIX_URN_EPC              (0x22)
 #define NDEF_URIPREFIX_URN_NFC              (0x23)
 
-#define NDEF_TYPE_URL                       (85)
+#define NDEF_TYPE_MIME                      (02)
+#define NDEF_TYPE_URI                       (85)
 #define NDEF_TYPE_TEXT                      (84)
-#define NDEF_TYPE_SMART_POSTER              (83)
 
-#define NDEF_STANDARD_TNF                   (0xD1)
-
+//for single record, well known type ndef record.
+#define NDEF_WELL_KNOWN_RECORD              (0x01)
+#define NDEF_MIME_TYPE_RECORD               (0x02)
 
 #define NDEF_BUFFER_SIZE 224
 //#define DEBUG
 
+struct FOUND_MESSAGE{
+    int type;
+    char * format;
+    uint8_t * payload;
+};
+
 class NDEF{
   public:
     NDEF();
-	char * decode_message(uint8_t * msg);
-	uint8_t	encode_URL(uint8_t uriPrefix, uint8_t * msg);
+	FOUND_MESSAGE decode_message(uint8_t * msg);
+	uint8_t	encode_URI(uint8_t uriPrefix, uint8_t * msg);
     uint8_t encode_TEXT(uint8_t * lang, uint8_t * msg);
+    uint8_t encode_MIME(uint8_t * mimetype, uint8_t * data);
 	
   private:
+    uint8_t encode_record_header(bool mb, bool me, bool cf, bool sr, bool il, uint8_t tnf);
+        
 //    char * get_type_description(uint8_t b);
     char * get_uri_prefix(uint8_t b);
-    boolean parse_uri(uint8_t * payload, int payload_len, char * uri);
-    boolean parse_text(uint8_t * payload, int payload_len, char * lang, char * text);
+    bool parse_uri(uint8_t * payload, int payload_len, char * uri);
+    bool parse_text(uint8_t * payload, int payload_len, char * lang, char * text);
 };
+
 
 #endif

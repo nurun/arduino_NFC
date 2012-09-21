@@ -11,107 +11,116 @@ NDEF::NDEF(){
  * @param IN msg  The NDEF message
  * @return             whether or not the parsing succeeds
  */
-char * NDEF::decode_message(uint8_t * msg) {
+FOUND_MESSAGE NDEF::decode_message(uint8_t * msg) {
     int offset = 2;
-    
-    bool me;
-    do {
-        bool mb = (*(msg + offset) & 0x80) == 0x80;        /* Message Begin */
-        me = (*(msg + offset) & 0x40) == 0x40;				/* Message End */
-        bool cf = (*(msg + offset) & 0x20) == 0x20;        /* Chunk Flag */
-        bool sr = (*(msg + offset) & 0x10) == 0x10;        /* Short Record */
-        bool il = (*(msg + offset) & 0x08) == 0x08;        /* ID Length Present */
-//        char * typeNameFormat = get_type_description(*(msg + offset) & 0x07);
-        uint8_t tn = (*(msg + offset) & 0x07);
-        offset++;
+    FOUND_MESSAGE m;
+
+    bool mb = (*(msg + offset) & 0x80) == 0x80;        /* Message Begin */
+    bool me = (*(msg + offset) & 0x40) == 0x40;        /* Message End */
+    bool cf = (*(msg + offset) & 0x20) == 0x20;        /* Chunk Flag */
+    bool sr = (*(msg + offset) & 0x10) == 0x10;        /* Short Record */
+    bool il = (*(msg + offset) & 0x08) == 0x08;        /* ID Length Present */
+    uint8_t tnf = (*(msg + offset) & 0x07);
+    offset++;
         
 #ifdef NDEFDEBUG
-		Serial.print("MB:"); Serial.println(mb, DEC);
-		Serial.print("ME:"); Serial.println(me, DEC);
-		Serial.print("CF:"); Serial.println(cf, DEC);
-		Serial.print("SR:"); Serial.println(sr, DEC);
-		Serial.print("IL:"); Serial.println(il, DEC);
-        Serial.print("TNF:"); Serial.println(tn, HEX);
-//		Serial.println(typeNameFormat);
+    Serial.print("MB:"); Serial.println(mb, DEC);
+    Serial.print("ME:"); Serial.println(me, DEC);
+    Serial.print("CF:"); Serial.println(cf, DEC);
+    Serial.print("SR:"); Serial.println(sr, DEC);
+    Serial.print("IL:"); Serial.println(il, DEC);
+    Serial.print("TNF:"); Serial.println(tnf, HEX);
 #endif
-        if (cf) {
-            Serial.println("chunk flag not supported yet");
-            return false;
-        }
+    if (cf) {
+        Serial.println("chunk flag not supported yet");
+        m.type = 0;
+        return m;
+    }
         
-        int typeLength = *(msg + offset);
+    int typeLength = *(msg + offset);
+    offset++;
+        
+    int payloadLength;
+    if (sr) {
+        payloadLength = *(msg + offset);
+        payloadLength = (payloadLength < 0) ? payloadLength + 256 : payloadLength;
         offset++;
+    } else {
+        offset += 4;
+    }
         
-        int payloadLength;
-        if (sr) {
-            payloadLength = *(msg + offset);
-            payloadLength = (payloadLength < 0) ? payloadLength + 256 : payloadLength;
-            offset++;
-        } else {
-            offset += 4;
-        }
-        
-        int idLength = 0;
-        if (il) {
-            idLength = *(msg + offset);
-            offset++;
-        }
-        
-        uint8_t type = *(msg + offset);
-		
-        offset += typeLength;
-        
-        if (il) {
-            offset += idLength;
-        }
-#ifdef DEBUG
-        Serial.print("TYPE "); Serial.println((char)type);
-#endif
-        
-        memcpy(msg, msg + offset, payloadLength);
-        offset += payloadLength;
-        char lang [2];
-        char text [NDEF_BUFFER_SIZE];
-        char uri [NDEF_BUFFER_SIZE];
-        switch (type) {
-            case NDEF_TYPE_URL:
-                if(parse_uri(msg, payloadLength, uri)){
-                    Serial.print("uri: "); Serial.println(uri);
-                    return uri;
-                }else{
-                    Serial.println("err");
+    int idLength = 0;
+    if (il) {
+        idLength = *(msg + offset);
+        offset++;
+    }
+    switch ((int)tnf) {
+        case 1:
+            //well known record type
+            m.type = *(msg + offset);
+            
+            offset += typeLength;
+            
+            if (il) {
+                offset += idLength;
+            }
+                
+            memcpy(msg, msg + offset, payloadLength);
+            offset += payloadLength;
+            char lang [2];
+            char text [NDEF_BUFFER_SIZE];
+            char uri [NDEF_BUFFER_SIZE];
+            
+            switch (m.type) {
+                case NDEF_TYPE_URI:
+                    if(parse_uri(msg, payloadLength, uri)){
+//                      Serial.print("uri: "); Serial.println(uri);
+                        m.format = (char *)(uint8_t)msg[0];
+                        m.payload = (uint8_t*)uri;
+                    }
+                    break;
+                case NDEF_TYPE_TEXT:
+                    if(parse_text(msg, payloadLength, lang, text)) {
+//                      Serial.print("lang: "); Serial.println(lang);
+//                      Serial.print("text: "); Serial.println(text);
+                        m.format = lang;
+                        m.payload = (uint8_t*)text;
+                    }
+                    break;
+                default:
+                    Serial.println("err, NDEF type: "); Serial.println((char)m.type);
+                    break;
                 }
-                break;
-            case NDEF_TYPE_TEXT:
-                if(parse_text(msg, payloadLength, lang, text)) {
-                    Serial.print("lang: "); Serial.println(lang);
-                    Serial.print("text: "); Serial.println(text);
-                } else {
-                    Serial.println("err");
-                }
-
-                break;
-            case NDEF_TYPE_SMART_POSTER:
-//              Serial.println("Found Smart Poster - Begin");
-//              parse_ndef_message(payload);
-//              Serial.println("Smart Poster - End");
-                break;
-            default:
-                Serial.print("err, NDEF type: "); Serial.println((char)type);
-                return false;
-                break;
-        }
-    } while (!me);              /* as long as this is not the last record */
-    
-    Serial.println("");
-    
-    return "";
+            break;
+        case 2:
+            //mime type record
+            m.type = NDEF_TYPE_MIME;
+            
+            char mimetype [typeLength-2];
+            uint8_t payload [NDEF_BUFFER_SIZE];
+            
+            memcpy(mimetype, msg+offset, typeLength);
+            memcpy(payload, msg +typeLength +offset, payloadLength - typeLength);
+                
+//            Serial.print("mimetype: "); Serial.println(mimetype);
+//            Serial.print("data: "); Serial.println((char*)payload);
+            
+            m.format = mimetype;
+            m.payload = payload;
+                
+            break;
+        default:
+            Serial.println("err");
+            break;
+        }   
+        
+    return m;
 }
 
 /**
  * encodes the NDEF message attaches the proper formatted header and terminating character
  *
- * @param type          supports: NDEF_TYPE_URL or NDEF_TYPE_TEXT
+ * @param type          supports: NDEF_TYPE_URI or NDEF_TYPE_TEXT
  * @param msg           the payload
  * @param uriPrefix     optional if you are using a URI prefix
  * @return              length of the encoded message
@@ -119,9 +128,12 @@ char * NDEF::decode_message(uint8_t * msg) {
 
 
 
-uint8_t	NDEF::encode_URL(uint8_t uriPrefix, uint8_t * msg){
+uint8_t	NDEF::encode_URI(uint8_t uriPrefix, uint8_t * msg){
     uint8_t len = strlen((char *)msg);
-    uint8_t payload_head[7] = {0x03, len+5, 0xD1, 0x01, len+1, 0x55, uriPrefix};
+    
+    uint8_t record_header = encode_record_header(1, 1, 0, 1, 0, NDEF_WELL_KNOWN_RECORD);
+    
+    uint8_t payload_head[7] = {0x03, len+5, record_header, 0x01, len+1, 0x55, uriPrefix};
     const uint8_t term[1] ={0xFE};
 
     memmove(msg+7, msg, len);
@@ -140,7 +152,9 @@ uint8_t	NDEF::encode_URL(uint8_t uriPrefix, uint8_t * msg){
 uint8_t NDEF::encode_TEXT(uint8_t * lang, uint8_t * msg){
     uint8_t len = strlen((char *)msg);
 
-    uint8_t payload_head[8] = {0x03, len+5, 0xD1, 0x01, len+2, 0x54, lang[0], lang[1]};
+    uint8_t record_header = encode_record_header(1, 1, 0, 1, 0, NDEF_WELL_KNOWN_RECORD);
+   
+    uint8_t payload_head[8] = {0x03, len+5, record_header, 0x01, len+2, 0x54, lang[0], lang[1]};
     const uint8_t term[1] ={0xFE};
     
     memmove(msg+8, msg, len);
@@ -157,68 +171,40 @@ uint8_t NDEF::encode_TEXT(uint8_t * lang, uint8_t * msg){
     
 }
 
+uint8_t NDEF::encode_MIME(uint8_t * mimetype, uint8_t * data){
+    uint8_t len = strlen((char *)data);
+    uint8_t typeLen = strlen((char *) mimetype);
+    
+    uint8_t record_header = encode_record_header(1, 1, 0, 1, 0, NDEF_MIME_TYPE_RECORD);
+    
+    uint8_t payload_head[5] = {0x03, len+3+typeLen, record_header, typeLen, len};
+    
+    memmove(data+typeLen, data, typeLen + 5);
+    memcpy(data, payload_head, 5);
+    memcpy(data+5, mimetype, typeLen);
+    
+    return 1;
+}
 
+uint8_t NDEF::encode_record_header(bool mb, bool me, bool cf, bool sr, bool il, uint8_t tnf){
+    uint8_t record_header = 0;
+    
+    if(mb)
+        record_header += 0x80;
+    if(me)
+        record_header += 0x40;
+    if(cf)
+        record_header += 0x20;
+    if(sr)
+        record_header += 0x10;
+    if(il)
+        record_header += 0x08;
+    
+    record_header += tnf;
 
+    return record_header;
+}
 
-
-/**
- * Extracts the NDEF message from a MIFARE Ultralight tag.
- *
- * @param IN  mtD       the pointer to the mifareul_tag struct
- * @param OUT msg  returned NDEF message
- * @param OUT tlv_len   length of the returned NDEF message
- * @return              whether or not the msg was successfully
- *                      filled
- */
-
-//bool NdefDecode::get_ndef_message_from_dump(uint8_t* dump, uint8_t * msg)
-//{
-//    int tlv_len = 0;
-//    // First byte is TLV type
-//    // We are looking for  "NDEF Message TLV" (0x03)
-//    if (dump[0] == 0x03) {
-//        tlv_len = dump[1];
-//        memcpy(msg, dump+2 , tlv_len);
-//        Serial.println("NDEF message found in dump.");
-//    } else {
-//        Serial.println("NDEF message TLV not found");
-//        return 0;
-//    }
-//    return 1;
-//}
-
-/**
- * Convert TNF bits to Type (used for debug only). This is specified in
- * section 3.2.6 "TNF (Type Name Format)" of "NFC Data Exchange Format
- * (NDEF) Technical Specification".
- *
- * (we don't really need this)
- *
- * @param IN  b  the value of the last 3 bits of the NDEF record header
- * @return       the human readable type of the NDEF record
- */
-//char * NDEF::get_type_description(uint8_t b){
-//    switch (b) {
-//        case 0x00:
-//            return "Empty";
-//        case 0x01:
-//            return "NFC Forum well-known type NFC RTD";
-//        case 0x02:
-//            return "Media-type as defined in RFC 2046 RFC 2046";
-//        case 0x03:
-//            return "Absolute URI as defined in RFC 3986 RFC 3986";
-//        case 0x04:
-//            return "NFC Forum external type NFC RTD";
-//        case 0x05:
-//            return "Unknown";
-//        case 0x06:
-//            return "Unchanged";
-//        case 0x07:
-//            return "Reserved";
-//        default:
-//            return "Invalid TNF byte!";
-//    }
-//}
 
 /**
  * Convert type of URI to the actual URI prefix to be used in conjunction
@@ -226,7 +212,6 @@ uint8_t NDEF::encode_TEXT(uint8_t * lang, uint8_t * msg){
  * 3.2.2 "URI Identifier Code" of "URI Record Type Definition Technical
  * Specification".
  *
- 
  
  !! comment out ones you don't want to support to save memory size, they add up to alot! 
  
@@ -263,8 +248,8 @@ char * NDEF::get_uri_prefix(uint8_t b)
 //            return "ftps://";
 //        case 0x0A:
 //            return "sftp://";
-//        case 0x0B:
-//            return "smb://";
+        case 0x0B:
+            return "smb://";
 //        case 0x0C:
 //            return "nfs://";
 //        case 0x0D:
@@ -325,7 +310,7 @@ char * NDEF::get_uri_prefix(uint8_t b)
  * @param IN payload_len  The length of the NDEF URI payload
  * @return                The full reconstructed URI
  */
-boolean NDEF::parse_uri(uint8_t * payload, int payload_len, char * uri ){
+bool NDEF::parse_uri(uint8_t * payload, int payload_len, char * uri ){
 	char * prefix = get_uri_prefix(payload[0]);
     int prefix_len = strlen(prefix);
     
@@ -348,7 +333,7 @@ boolean NDEF::parse_uri(uint8_t * payload, int payload_len, char * uri ){
  * @param OUT text        The text contained in NDEF Text Record
  * @return                Success or not.
  */
-boolean NDEF::parse_text(uint8_t * payload, int payload_len, char * lang, char * text){
+bool NDEF::parse_text(uint8_t * payload, int payload_len, char * lang, char * text){
     bool utf16_format = ((payload[0] & 0x80) == 0x80);
     bool rfu = ((payload[0] & 0x40) == 0x40);
     if(rfu) {
