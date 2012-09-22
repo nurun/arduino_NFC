@@ -337,10 +337,6 @@ bool NDEF::parse_uri(uint8_t * payload, int payload_len, char * uri ){
     
     memcpy(uri, prefix, prefix_len);
     memcpy(uri + prefix_len, payload + 1, payload_len - 1);
-    *(uri + prefix_len + payload_len - 1) = 0x00;
-#ifdef DEBUG
-        Serial.println(uri);
-#endif 
 
     return true;
 }
@@ -355,24 +351,17 @@ bool NDEF::parse_uri(uint8_t * payload, int payload_len, char * uri ){
  * @return             Success or not.
  */
 bool NDEF::parse_text(uint8_t * payload, int payload_len, char * lang, char * text){
-    bool utf16_format = ((payload[0] & 0x80) == 0x80);
-    bool rfu = ((payload[0] & 0x40) == 0x40);
-    if(rfu) {
-        Serial.println("ERROR: RFU should be set to zero.");
-        return false;
-    }
+// ? need this??
+//    bool utf16_format = ((payload[0] & 0x80) == 0x80);
+//    bool rfu = ((payload[0] & 0x40) == 0x40);
+//    if(rfu) {
+//        Serial.println("ERROR: RFU should be set to zero.");
+//        return false;
+//    }
     
-    memcpy(lang, payload + 1, 2);
-    *(lang + 2) = 0x00;
-    
-    const int text_len = payload_len - 2;
-    
-#ifdef DEBUG
-        Serial.print("Format: "); Serial.println((char *)utf16_format);
-#endif
-
-    memcpy(text, payload + 3, text_len);
-    *(text + text_len) = 0x00;
+    //this is hinkey
+    memcpy(lang, payload+1, 2);
+    memcpy(text, payload +3 , payload_len-3);
     
     return true;
 }
