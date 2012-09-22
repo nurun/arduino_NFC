@@ -11,6 +11,9 @@ There are 2 examples; read and write which both have alternate functionality com
 
 Since there are so many options you may run into memory limits. Keeping a small buffer size, and commenting out functions you don't need for your application will help if you run into these limits. 
  
+The files are split into 3 different sections (classes): 
 
-
+The PN532 chip level supports IO bus for the I2C and SPI variants.
+The Mifare level supports generic reading and writing to Classic and Ultralight tags.
+The NDEF level supports the encoding and decoding of NDEF formatted content. 
 
