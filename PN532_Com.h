@@ -1,3 +1,14 @@
+/**************************************************************************/
+/*! 
+	@file     PN532_Com.h
+	@author   Odopod Inc.
+	@license  BSD
+	
+	This code is refactored by Odopod (http://www.odopod.com) based on the 
+	Adafruit NFC ShieldI2C Library (https://github.com/adafruit/Adafruit_NFCShield_I2C).
+*/
+/**************************************************************************/
+
 #ifndef __PN532_COM_INCLUDED__
 #define __PN532_COM_INCLUDED__
 

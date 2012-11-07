@@ -1,3 +1,14 @@
+/**************************************************************************/
+/*! 
+	@file     PN532_I2C.cpp
+	@author   Odopod Inc.
+	@license  BSD
+	
+	This code is refactored by Odopod (http://www.odopod.com) based on the 
+	Adafruit NFC ShieldI2C Library (https://github.com/adafruit/Adafruit_NFCShield_I2C).
+*/
+/**************************************************************************/
+
 #include "PN532_I2C.h"
 
 static const byte PN532_ACK[6] = {0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00};

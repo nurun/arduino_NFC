@@ -1,3 +1,11 @@
+/**************************************************************************/
+/*! 
+	@file     Mifare.cpp
+	@author   Odopod Inc.
+	@license  BSD
+*/
+/**************************************************************************/
+
 #include "Mifare.h"
 
 static byte packetbuffer[PN532_PACKBUFFSIZE] ;

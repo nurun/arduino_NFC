@@ -1,3 +1,15 @@
+/**************************************************************************/
+/*! 
+	@file     PN532_SPI.cpp
+	@author   Odopod Inc.
+	@license  BSD
+	
+	This code is refactored by Odopod (http://www.odopod.com) based on the 
+	Seeedstudio PN_SPI library (http://www.seeedstudio.com/wiki/NFC_Shield) 
+	and the Adafruit PN532 Library (https://github.com/adafruit/PN532).
+*/
+/**************************************************************************/
+
 #include "PN532_SPI.h"
 
 static const byte PN532_ACK[6] = {0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00};
