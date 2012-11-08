@@ -74,7 +74,7 @@ FOUND_MESSAGE NDEF::decode_message(uint8_t * msg) {
                 
             memcpy(msg, msg + offset, payloadLength);
             offset += payloadLength;
-            char lang [2];
+            char lang [3];
             char text [NDEF_BUFFER_SIZE];
             char uri [NDEF_BUFFER_SIZE];
             
@@ -86,11 +86,11 @@ FOUND_MESSAGE NDEF::decode_message(uint8_t * msg) {
                         m.payload = (uint8_t*)uri;
                     }
                     break;
-                case NDEF_TYPE_TEXT:
+                case NDEF_TYPE_TEXT:	
                     if(parse_text(msg, payloadLength, lang, text)) {
 //                      Serial.print("lang: "); Serial.println(lang);
 //                      Serial.print("text: "); Serial.println(text);
-                        m.format = lang;
+                        m.format = (char *)(uint8_t*)lang;
                         m.payload = (uint8_t*)text;
                     }
                     break;
@@ -344,7 +344,8 @@ bool NDEF::parse_uri(uint8_t * payload, int payload_len, char * uri ){
     
     memcpy(uri, prefix, prefix_len);
     memcpy(uri + prefix_len, payload + 1, payload_len - 1);
-
+	*(uri + prefix_len + payload_len - 1) = 0x00;
+    
     return true;
 }
 
@@ -358,17 +359,12 @@ bool NDEF::parse_uri(uint8_t * payload, int payload_len, char * uri ){
  * @return             Success or not.
  */
 bool NDEF::parse_text(uint8_t * payload, int payload_len, char * lang, char * text){
-// ? need this??
-//    bool utf16_format = ((payload[0] & 0x80) == 0x80);
-//    bool rfu = ((payload[0] & 0x40) == 0x40);
-//    if(rfu) {
-//        Serial.println("ERROR: RFU should be set to zero.");
-//        return false;
-//    }
+    memcpy(lang, payload + 1, 2);
+    *(lang + 2) = 0x00;
     
-    //this is hinkey
-    memcpy(lang, payload+1, 2);
-    memcpy(text, payload +3 , payload_len-3);
+    const int text_len = payload_len - 3;
+    memcpy(text, payload + 3, text_len);
+    *(text + text_len) = 0x00;
     
     return true;
 }
