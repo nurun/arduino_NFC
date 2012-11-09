@@ -1,7 +1,7 @@
 /**************************************************************************/
 /*! 
 	@file     PN532_I2C.cpp
-	@author   Odopod Inc.
+	@author  Odopod, a Nurun Company
 	@license  BSD
 	
 	This code is refactored by Odopod (http://www.odopod.com) based on the 
